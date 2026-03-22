@@ -54,7 +54,7 @@ jobs:
             - name: Setup Terraform
               uses: hashicorp/setup-terraform@v3
               with:
-                  terraform_version: "1.5.0"
+                  terraform_version: "1.14.4"
 
             # Step 7: Initialize Terraform (connects to S3 remote state)
             - name: Terraform Init
