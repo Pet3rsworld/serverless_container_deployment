@@ -1,0 +1,74 @@
+name: Deploy Fintech API to AWS ECS
+
+# ─── TRIGGER ─────────────────────────────────────
+# This workflow runs every time code is pushed to main
+on:
+    push:
+        branches:
+            - main
+
+# ─── PERMISSIONS ─────────────────────────────────
+# Grant read access to checkout the code
+permissions:
+    contents: read
+
+# ─── JOBS ────────────────────────────────────────
+jobs:
+    deploy:
+        name: Build, Push & Deploy
+        runs-on: ubuntu-latest
+
+        steps:
+            # Step 1: Download our code onto the runner
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            # Step 2: Configure AWS credentials using our secrets
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ secrets.AWS_REGION }}
+
+            # Step 3: Authenticate Docker to ECR
+            - name: Login to Amazon ECR
+              id: login-ecr
+              uses: aws-actions/amazon-ecr-login@v2
+
+            # Step 4: Build the Docker image
+            - name: Build Docker Image
+              run: docker build -t sa-fintech-api:latest app/
+
+            # Step 5: Tag & Push the Docker image to ECR
+            - name: Tag and Push Image to ECR
+              env:
+                  ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+                  ECR_REPOSITORY: sa-fintech-api
+                  IMAGE_TAG: latest
+              run: |
+                  docker tag sa-fintech-api:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                  docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+            # Step 6: Install Terraform on the runner
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: "1.5.0"
+
+            # Step 7: Initialize Terraform (connects to S3 remote state)
+            - name: Terraform Init
+              run: terraform init
+
+            # Step 8: Apply Terraform changes
+            - name: Terraform Apply
+              run: terraform apply -auto-approve
+
+            # Step 9: Force ECS to pull the latest image
+            - name: Force New ECS Deployment
+              run: |
+                  aws ecs update-service \
+                    --cluster serverless-container-deployment-cluster \
+                    --service serverless-container-deployment-service \
+                    --force-new-deployment \
+                    --region ${{ secrets.AWS_REGION }}
