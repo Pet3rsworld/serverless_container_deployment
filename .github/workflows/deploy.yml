@@ -38,16 +38,16 @@ jobs:
 
             # Step 4: Build the Docker image
             - name: Build Docker Image
-              run: docker build -t sa-fintech-api:latest app/
+              run: docker build -t serverless_container_deployment-fintech-repo:latest app/
 
             # Step 5: Tag & Push the Docker image to ECR
             - name: Tag and Push Image to ECR
               env:
                   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                  ECR_REPOSITORY: sa-fintech-api
+                  ECR_REPOSITORY: serverless_container_deployment-fintech-repo
                   IMAGE_TAG: latest
               run: |
-                  docker tag sa-fintech-api:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+                  docker tag serverless_container_deployment-fintech-repo:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
                   docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
             # Step 6: Install Terraform on the runner
