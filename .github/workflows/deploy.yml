@@ -68,7 +68,7 @@ jobs:
             - name: Force New ECS Deployment
               run: |
                   aws ecs update-service \
-                    --cluster serverless-container-deployment-cluster \
-                    --service serverless-container-deployment-service \
+                    --cluster serverless_container_deployment-cluster \
+                    --service serverless_container_deployment-service \
                     --force-new-deployment \
                     --region ${{ secrets.AWS_REGION }}
