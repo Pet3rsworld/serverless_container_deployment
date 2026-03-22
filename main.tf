@@ -26,3 +26,16 @@ module "security" {
   project_name = "serverless_container_deployment"
   vpc_id       = module.networking.vpc_id
 }
+
+# 5. Module for compute
+module "compute" {
+  source             = "./modules/compute"
+  project_name       = "serverless_container_deployment"
+  vpc_id             = module.networking.vpc_id
+  public_subnet_ids  = module.networking.public_subnet_ids
+  private_subnet_ids = module.networking.private_subnet_ids
+  alb_sg_id          = module.security.alb_sg_id
+  ecs_sg_id          = module.security.ecs_sg_id
+  container_image    = "591359167483.dkr.ecr.us-east-1.amazonaws.com/serverless_container_deployment-fintech-repo:latest"
+  execution_role_arn = module.security.execution_role_arn
+}

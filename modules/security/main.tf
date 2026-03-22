@@ -40,3 +40,24 @@ resource "aws_security_group" "ecs_sg" {
 
   }
 }
+
+# 3. Execution role for Fargate
+resource "aws_iam_role" "ecs_role" {
+  name = "${var.project_name}-ecs-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+    }]
+  })
+}
+
+# 4. Policy to attach role
+resource "aws_iam_role_policy_attachment" "ecs_policy" {
+  role       = aws_iam_role.ecs_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
